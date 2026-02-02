@@ -1,0 +1,20 @@
+# Node modules (se in futuro aggiungi build tools)
+node_modules/
+
+# File di sistema
+.DS_Store
+Thumbs.db
+
+# File di editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# File temporanei
+*.log
+*.tmp
+
+# File di backup
+*.bak
+*~
