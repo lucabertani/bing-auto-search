@@ -1,150 +1,172 @@
-# 🐛 Guida al Debug - Bing Auto Search
+# 🐛 Debug Guide - Bing Auto Search
 
-## Come Visualizzare gli Errori
+## How to View Errors
 
-### 1. Console del Service Worker
+### 1. Service Worker Console
 
-Il service worker gestisce tutte le ricerche. Per vedere i suoi log:
+The service worker handles all searches. To see its logs:
 
-1. Vai su `edge://extensions/`
-2. Trova **Bing Auto Search**
-3. Clicca su **"Ispeziona visualizzazioni: service worker"** (link blu)
-4. Si aprirà la console del service worker
+1. Go to `edge://extensions/`
+2. Find **Bing Auto Search**
+3. Click on **"Inspect views: service worker"** (blue link)
+4. Service worker console will open
 
-**Cosa cercare:**
+**What to look for:**
 
-- `Service Worker attivo e pronto!` - Il service worker è caricato
-- `Bing Auto Search: 200 query generate` - Le query sono state create
-- `Messaggio ricevuto: {action: "start"}` - Il messaggio dal popup è arrivato
-- `Avvio ciclo di ricerca con parametri:` - I parametri sono stati caricati
-- `Ricerca 1/10: "query..."` - Le ricerche stanno partendo
+- `Service Worker active and ready!` - Service worker is loaded
+- `Bing Auto Search: 200 queries generated` - Queries were created
+- `Message received: {action: "start"}` - Message from popup arrived
+- `Starting search cycle with parameters:` - Parameters were loaded
+- `Search 1/10: "query..."` - Searches are starting
 
-### 2. Console del Popup
+### 2. Popup Console
 
-Per vedere gli errori del popup:
+To see popup errors:
 
-1. Clicca con il tasto destro sull'icona dell'estensione
-2. Seleziona **"Ispeziona"**
-3. Si aprirà DevTools con la console del popup
+1. Right-click on the extension icon
+2. Select **"Inspect"**
+3. DevTools will open with popup console
 
-### 3. Alert Automatici
+### 3. Automatic Alerts
 
-Ora l'estensione mostra **alert automatici** per tutti gli errori:
+Now the extension shows **automatic alerts** for all errors:
 
-- ❌ Errori di validazione input
-- ❌ Errori di comunicazione con il service worker
-- ❌ Errori durante l'apertura delle tab
-- ❌ Errori di storage
+- ❌ Input validation errors
+- ❌ Service worker communication errors
+- ❌ Tab opening errors
+- ❌ Storage errors
 
-## Problemi Comuni e Soluzioni
+## Common Problems and Solutions
 
-### ❌ Problema: "Errore comunicazione con service worker"
+### ❌ Problem: "Service worker communication error"
 
-**Causa:** Il service worker non è attivo
+**Cause:** Service worker is not active
 
-**Soluzione:**
+**Solution:**
 
-1. Vai su `edge://extensions/`
-2. Clicca sul pulsante di ricarica (⟳) dell'estensione
-3. Clicca su "Ispeziona visualizzazioni: service worker"
-4. Verifica che vedi "Service Worker attivo e pronto!" nella console
-5. Riprova ad avviare
+1. Go to `edge://extensions/`
+2. Click the reload button (⟳) on the extension
+3. Click on "Inspect views: service worker"
+4. Verify you see "Service Worker active and ready!" in console
+5. Try starting again
 
-### ❌ Problema: Va in esecuzione ma ritorna subito a "Pronto"
+### ❌ Problem: Goes to running but immediately returns to "Ready"
 
-**Possibili cause:**
+**Possible causes:**
 
-1. Il service worker si è disattivato
-2. I permessi non sono stati concessi
-3. Problema con chrome.tabs API
+1. Service worker deactivated
+2. Permissions not granted
+3. Problem with chrome.tabs API
 
-**Soluzione:**
+**Solution:**
 
-1. Apri la console del service worker (vedi sopra)
-2. Guarda se ci sono errori rossi
-3. L'estensione ora salverà l'errore e lo mostrerà in un alert
-4. Se vedi "Tab non creata correttamente", ricarica l'estensione
+1. Open service worker console (see above)
+2. Check if there are red errors
+3. Extension now saves errors and shows them in alerts
+4. If you see "Tab not created correctly", reload extension
 
-### ❌ Problema: "Permissions error" o "Cannot read properties"
+### ❌ Problem: "Permissions error" or "Cannot read properties"
 
-**Causa:** Permessi mancanti
+**Cause:** Missing permissions
 
-**Soluzione:**
+**Solution:**
 
-1. Verifica che nel manifest.json ci siano:
-   - `"permissions": ["storage", "tabs"]`
+1. Verify that manifest.json contains:
+   - `"permissions": ["storage", "tabs", "scripting", "alarms"]`
    - `"host_permissions": ["https://www.bing.com/*"]`
-2. Ricarica l'estensione
+2. Reload extension
 
-### ❌ Problema: Le icone non si vedono
+### ❌ Problem: Icons not showing
 
-**Causa:** File PNG mancanti
+**Cause:** Missing PNG files
 
-**Soluzione:**
+**Solution:**
 
-1. Apri `icons/generate-icons.html` nel browser
-2. Scarica le 3 icone (icon16.png, icon48.png, icon128.png)
-3. Salvale nella cartella `icons/`
-4. Ricarica l'estensione
+1. Open `icons/generate-icons.html` in browser
+2. Download the 3 icons (icon16.png, icon48.png, icon128.png)
+3. Save them in `icons/` folder
+4. Reload extension
 
-## Test Step-by-Step
+## Step-by-Step Testing
 
-### Test Completo
+### Complete Test
 
-1. **Apri la console del service worker** (edge://extensions/ → Ispeziona service worker)
-2. **Clicca sull'icona** dell'estensione per aprire il popup
-3. **Imposta valori bassi** per test rapido:
-   - X = 2 (secondi prima di chiudere)
-   - Y = 1 (secondi tra ricerche)
-   - Z = 3 (ricerche totali)
-4. **Clicca "Avvia"**
-5. **Verifica nella console del service worker:**
+1. **Open service worker console** (edge://extensions/ → Inspect service worker)
+2. **Click extension icon** to open popup
+3. **Set low values** for quick test:
+   - X = 2-3 (seconds before closing)
+   - Y = 1-2 (seconds between searches)
+   - Z = 3 (total searches)
+4. **Click "Start"**
+5. **Verify in service worker console:**
    ```
-   Messaggio ricevuto: {action: "start"}
-   Start command processato con successo
-   startSearchCycle chiamato
-   Parametri recuperati: {closeDelay: 2, searchDelay: 1, ...}
-   Avvio ciclo di ricerca con parametri: {closeDelay: 2, ...}
-   Ricerca 1/3: "che tempo fa oggi?"
+   Message received: {action: "start"}
+   Start command processed successfully
+   startSearchCycle called
+   Parameters retrieved: {closeDelayMin: 2, closeDelayMax: 3, ...}
+   Starting search cycle with parameters: {closeDelayMin: 2, ...}
+   Search 1/3: "what's the weather today?"
    ```
-6. **Verifica che si aprano 3 tab di Bing**
-7. **Verifica che si chiudano automaticamente**
+6. **Verify that 3 Bing tabs open**
+7. **Verify they close automatically**
 
-### Se Niente Funziona
+### If Nothing Works
 
-1. Disinstalla l'estensione
-2. Riavvia Edge
-3. Reinstalla l'estensione
-4. Apri prima la console del service worker
-5. POI clicca sull'icona e prova ad avviare
-6. Leggi TUTTI gli errori nella console
+1. Uninstall extension
+2. Restart Edge
+3. Reinstall extension
+4. Open service worker console first
+5. THEN click icon and try starting
+6. Read ALL errors in console
 
-## Log Dettagliati
+## Detailed Logs
 
 ### Service Worker (background.js)
 
-- ✅ `Service Worker attivo e pronto!`
-- ✅ `Bing Auto Search: 200 query generate`
-- ✅ `Messaggio ricevuto: {...}`
-- ✅ `Start command processato con successo`
-- ✅ `startSearchCycle chiamato`
-- ✅ `Parametri recuperati: {...}`
-- ✅ `Avvio ciclo di ricerca con parametri: {...}`
-- ✅ `Ricerca N/Z: "query"`
-- ✅ `Tutte le ricerche completate!`
+- ✅ `Service Worker active and ready!`
+- ✅ `Bing Auto Search: 200 queries generated`
+- ✅ `Message received: {...}`
+- ✅ `Start command processed successfully`
+- ✅ `startSearchCycle called`
+- ✅ `Parameters retrieved: {...}`
+- ✅ `Starting search cycle with parameters: {...}`
+- ✅ `Search N/Z: "query"`
+- ✅ `All searches completed!`
 
-### Errori Comuni
+### Common Errors
 
-- ❌ `Storage error: ...` - Problema con chrome.storage
-- ❌ `Errore apertura tab: ...` - Problema con chrome.tabs
-- ❌ `Tab non creata correttamente` - chrome.tabs.create ha fallito
-- ❌ `Parametri non validi: ...` - Valori non corretti
+- ❌ `Storage error: ...` - Problem with chrome.storage
+- ❌ `Tab opening error: ...` - Problem with chrome.tabs
+- ❌ `Tab not created correctly` - chrome.tabs.create failed
+- ❌ `Invalid parameters: ...` - Incorrect values
 
-## Contatti
+## Alarm-Related Issues
 
-Se il problema persiste, fornisci:
+### ❌ Problem: Second search never happens (delays > 30s)
 
-1. Screenshot della console del service worker
-2. Screenshot del popup con l'errore
-3. Valori di X, Y, Z usati
-4. Versione di Edge (`edge://version/`)
+**Cause:** Service worker goes to sleep, clearing setTimeout
+
+**Solution:** Already implemented! Extension uses chrome.alarms API for delays > 30 seconds
+
+**Verify it's working:**
+
+1. Set searchDelayMin=50, searchDelayMax=80
+2. Start search cycle
+3. In service worker console, look for:
+   ```
+   Using alarm for delay of 50s (> 30s)
+   ```
+4. After delay, should see:
+   ```
+   Alarm nextSearch fired, resuming search...
+   Resuming search 2/10
+   ```
+
+## Contact
+
+If problem persists, provide:
+
+1. Service worker console screenshot
+2. Popup screenshot with error
+3. X, Y, Z values used
+4. Edge version (`edge://version/`)

@@ -1,23 +1,23 @@
-// Variabili globali per gestire il ciclo di ricerca
+// Global variables to manage the search cycle
 let searchTimeout = null;
 let closeTimeout = null;
 let currentTabId = null;
-let currentParams = null; // Salva i parametri correnti per l'alarm
+let currentParams = null; // Save current parameters for alarm
 
 /**
- * Genera un numero casuale tra min e max (inclusi)
+ * Generate a random number between min and max (inclusive)
  */
 function getRandomInRange(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
- * Crea un alarm per la prossima ricerca (per delay > 30 secondi)
+ * Create an alarm for the next search (for delay > 30 seconds)
  */
 function scheduleNextSearchWithAlarm(delaySeconds, iteration, params) {
-  console.log(`Usando alarm per delay di ${delaySeconds}s (> 30s)`);
+  console.log(`Using alarm for delay of ${delaySeconds}s (> 30s)`);
 
-  // Salva i parametri nello storage per l'alarm
+  // Save parameters to storage for alarm
   chrome.storage.local.set(
     {
       nextSearchIteration: iteration,
@@ -25,28 +25,28 @@ function scheduleNextSearchWithAlarm(delaySeconds, iteration, params) {
       nextSearchScheduled: Date.now() + delaySeconds * 1000,
     },
     () => {
-      // Crea un alarm che scatterà tra delaySeconds
+      // Create an alarm that will fire after delaySeconds
       chrome.alarms.create("nextSearch", { delayInMinutes: delaySeconds / 60 });
     },
   );
 }
 
 /**
- * Crea un timeout normale per la prossima ricerca (per delay <= 30 secondi)
+ * Create a normal timeout for the next search (for delay <= 30 seconds)
  */
 function scheduleNextSearchWithTimeout(delaySeconds, iteration, params) {
-  console.log(`Usando setTimeout per delay di ${delaySeconds}s (<= 30s)`);
+  console.log(`Using setTimeout for delay of ${delaySeconds}s (<= 30s)`);
   searchTimeout = setTimeout(() => {
     performSearch(iteration, params);
   }, delaySeconds * 1000);
 }
 
-// Listener per gli alarms
+// Alarm listener
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === "nextSearch") {
-    console.log("Alarm nextSearch scattato, riprendo ricerca...");
+    console.log("Alarm nextSearch fired, resuming search...");
 
-    // Recupera i parametri salvati
+    // Retrieve saved parameters
     chrome.storage.local.get(
       ["nextSearchIteration", "nextSearchParams", "isRunning"],
       (result) => {
@@ -56,18 +56,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
           result.nextSearchParams
         ) {
           console.log(
-            `Ripresa ricerca ${result.nextSearchIteration}/${result.nextSearchParams.totalSearches}`,
+            `Resuming search ${result.nextSearchIteration}/${result.nextSearchParams.totalSearches}`,
           );
           performSearch(result.nextSearchIteration, result.nextSearchParams);
 
-          // Pulisci i dati dell'alarm
+          // Clean up alarm data
           chrome.storage.local.remove([
             "nextSearchIteration",
             "nextSearchParams",
             "nextSearchScheduled",
           ]);
         } else {
-          console.log("Alarm scartato: ricerca non più attiva o dati mancanti");
+          console.log(
+            "Alarm discarded: search no longer active or data missing",
+          );
         }
       },
     );
@@ -75,16 +77,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 /**
- * Funzione che viene eseguita nella tab di Bing
- * Trova la barra di ricerca, inserisce il testo e invia il form
- * @param {string} query - La query di ricerca da inserire
+ * Function executed in Bing tab
+ * Finds the search bar, inserts text and submits the form
+ * @param {string} query - The search query to insert
  */
 function submitSearchForm(query) {
   try {
-    // Tenta di trovare la barra di ricerca di Bing
+    // Try to find Bing's search bar
     let searchInput = document.querySelector("input[name='q']");
 
-    // Se non la trova, tenta con altri selettori
+    // If not found, try with other selectors
     if (!searchInput) {
       searchInput = document.querySelector("input[type='search']");
     }
@@ -94,30 +96,30 @@ function submitSearchForm(query) {
     }
 
     if (!searchInput) {
-      throw new Error("Barra di ricerca non trovata");
+      throw new Error("Search bar not found");
     }
 
-    // Inserisci il testo
+    // Insert text
     searchInput.value = query;
 
-    // Simula digitazione per attivare event listeners
+    // Simulate typing to trigger event listeners
     const event = new Event("input", { bubbles: true });
     searchInput.dispatchEvent(event);
 
-    // Aspetta un po' per assicurarti che gli event listener siano stati processati
+    // Wait a bit to ensure event listeners have been processed
     setTimeout(() => {
-      // Trova il form di ricerca
+      // Find the search form
       let form = searchInput.closest("form");
 
       if (!form) {
-        // Se non trovi il form, cerca il pulsante di ricerca
+        // If form not found, search for the search button
         const submitBtn = document.querySelector(
-          "button[aria-label='Ricerca'], button[type='submit']",
+          "button[aria-label='Search'], button[type='submit']",
         );
         if (submitBtn) {
           submitBtn.click();
         } else {
-          // Se non trovi neanche il pulsante, invia il form manualmente
+          // If button also not found, submit form manually
           const keyEvent = new KeyboardEvent("keydown", {
             key: "Enter",
             code: "Enter",
@@ -146,18 +148,18 @@ function submitSearchForm(query) {
           searchInput.dispatchEvent(keyUpEvent);
         }
       } else {
-        // Invia il form
+        // Submit the form
         form.submit();
       }
     }, 100);
   } catch (error) {
-    console.error("Errore nel compilare il form di ricerca:", error.message);
+    console.error("Error filling search form:", error.message);
   }
 }
 
 /**
- * Genera automaticamente 200 query di ricerca generiche
- * Utilizza template e combinazioni per creare frasi varie
+ * Automatically generate 200 generic search queries
+ * Uses templates and combinations to create varied phrases
  */
 function generateQueries() {
   const queries = [];
@@ -311,13 +313,13 @@ function generateQueries() {
   return queries.slice(0, 200);
 }
 
-// Array di query (generato una volta all'avvio)
+// Query array (generated once at startup)
 const SEARCH_QUERIES = generateQueries();
-console.log(`Bing Auto Search: ${SEARCH_QUERIES.length} query generate`);
-console.log("Service Worker attivo e pronto!");
+console.log(`Bing Auto Search: ${SEARCH_QUERIES.length} queries generated`);
+console.log("Service Worker active and ready!");
 
 /**
- * Ferma tutti i timeout e chiude la tab corrente se aperta
+ * Stop all timeouts and close current tab if open
  */
 function stopSearch() {
   if (searchTimeout) {
@@ -330,40 +332,40 @@ function stopSearch() {
     closeTimeout = null;
   }
 
-  // Cancella eventuali alarm programmati
+  // Cancel any scheduled alarms
   chrome.alarms.clear("nextSearch", (wasCleared) => {
     if (wasCleared) {
-      console.log("Alarm nextSearch cancellato");
+      console.log("Alarm nextSearch cancelled");
     }
   });
 
-  // Pulisci i dati dell'alarm dallo storage
+  // Clean up alarm data from storage
   chrome.storage.local.remove([
     "nextSearchIteration",
     "nextSearchParams",
     "nextSearchScheduled",
   ]);
 
-  // Chiudi la tab corrente se esiste
+  // Close current tab if it exists
   if (currentTabId !== null) {
     chrome.tabs.remove(currentTabId, () => {
       if (chrome.runtime.lastError) {
-        console.log("Tab già chiusa o non esistente");
+        console.log("Tab already closed or doesn't exist");
       }
       currentTabId = null;
     });
   }
 
-  // Aggiorna lo stato
+  // Update status
   chrome.storage.local.set({ isRunning: false });
 }
 
 /**
- * Esegue una singola ricerca su Bing
+ * Perform a single search on Bing
  */
 function performSearch(iteration, params) {
   try {
-    // Verifica se dobbiamo continuare
+    // Check if we should continue
     chrome.storage.local.get(["isRunning"], (result) => {
       try {
         if (chrome.runtime.lastError) {
@@ -371,84 +373,84 @@ function performSearch(iteration, params) {
         }
 
         if (!result.isRunning) {
-          console.log("Ricerca interrotta dall'utente");
+          console.log("Search stopped by user");
           return;
         }
 
-        // Seleziona una query casuale dall'array
+        // Select a random query from the array
         const randomIndex = Math.floor(Math.random() * SEARCH_QUERIES.length);
         const query = SEARCH_QUERIES[randomIndex];
 
-        console.log(`Ricerca ${iteration}/${params.totalSearches}: "${query}"`);
+        console.log(`Search ${iteration}/${params.totalSearches}: "${query}"`);
 
-        // Apri una nuova tab con Bing home
+        // Open a new tab with Bing home
         chrome.tabs.create(
           { url: "https://www.bing.com", active: false },
           (tab) => {
             try {
               if (chrome.runtime.lastError) {
                 throw new Error(
-                  `Errore apertura tab: ${chrome.runtime.lastError.message}`,
+                  `Tab opening error: ${chrome.runtime.lastError.message}`,
                 );
               }
 
               if (!tab || !tab.id) {
-                throw new Error("Tab non creata correttamente");
+                throw new Error("Tab not created correctly");
               }
 
               currentTabId = tab.id;
 
-              // Aggiorna il contatore delle iterazioni
+              // Update iteration counter
               chrome.storage.local.set({ currentIteration: iteration }, () => {
                 if (chrome.runtime.lastError) {
                   console.error(
-                    "Errore aggiornamento iterazione:",
+                    "Iteration update error:",
                     chrome.runtime.lastError,
                   );
                 }
               });
 
-              // Aspetta che la pagina sia completamente caricata
+              // Wait for page to fully load
               let retries = 0;
-              const maxRetries = 30; // Max 30 secondi di attesa
+              const maxRetries = 30; // Max 30 seconds wait
               const waitForPageLoad = () => {
                 chrome.tabs.get(tab.id, (currentTab) => {
                   if (chrome.runtime.lastError) {
                     console.log(
-                      "Tab chiusa o errore:",
+                      "Tab closed or error:",
                       chrome.runtime.lastError,
                     );
                     return;
                   }
 
                   if (currentTab.status === "complete") {
-                    // Pagina caricata, ora esegui lo script
-                    console.log("Pagina Bing caricata, compilo il form...");
+                    // Page loaded, now execute script
+                    console.log("Bing page loaded, filling form...");
 
-                    // Genera un closeDelay casuale tra min e max
+                    // Generate a random closeDelay between min and max
                     const actualCloseDelay = getRandomInRange(
                       params.closeDelayMin,
                       params.closeDelayMax,
                     );
                     console.log(
-                      `Chiusura tab programmata tra ${params.closeDelayMin}-${params.closeDelayMax}s (casuale: ${actualCloseDelay}s)`,
+                      `Tab close scheduled in ${params.closeDelayMin}-${params.closeDelayMax}s (random: ${actualCloseDelay}s)`,
                     );
 
-                    // Programma la chiusura della tab SUBITO (prima di eseguire lo script)
-                    // Questo garantisce che il timeout venga impostato anche se il callback di executeScript non viene chiamato
+                    // Schedule tab close IMMEDIATELY (before executing script)
+                    // This ensures timeout is set even if executeScript callback isn't called
                     closeTimeout = setTimeout(() => {
                       chrome.tabs.remove(tab.id, () => {
                         if (chrome.runtime.lastError) {
                           console.log(
-                            "Tab già chiusa o errore:",
+                            "Tab already closed or error:",
                             chrome.runtime.lastError,
                           );
                         }
                         currentTabId = null;
 
-                        // Se abbiamo completato tutte le ricerche, ferma il ciclo
+                        // If we've completed all searches, stop the cycle
                         if (iteration >= params.totalSearches) {
-                          console.log("Tutte le ricerche completate!");
+                          console.log("All searches completed!");
                           chrome.storage.local.set({
                             isRunning: false,
                             currentIteration: params.totalSearches,
@@ -456,17 +458,17 @@ function performSearch(iteration, params) {
                           return;
                         }
 
-                        // Genera un searchDelay casuale tra min e max
+                        // Generate a random searchDelay between min and max
                         const actualSearchDelay = getRandomInRange(
                           params.searchDelayMin,
                           params.searchDelayMax,
                         );
                         console.log(
-                          `Prossima ricerca tra ${params.searchDelayMin}-${params.searchDelayMax}s (casuale: ${actualSearchDelay}s)`,
+                          `Next search in ${params.searchDelayMin}-${params.searchDelayMax}s (random: ${actualSearchDelay}s)`,
                         );
 
-                        // Usa alarm se delay > 30 secondi (per evitare sleep del service worker)
-                        // Altrimenti usa setTimeout normale
+                        // Use alarm if delay > 30 seconds (to avoid service worker sleep)
+                        // Otherwise use normal setTimeout
                         if (actualSearchDelay > 30) {
                           scheduleNextSearchWithAlarm(
                             actualSearchDelay,
@@ -483,7 +485,7 @@ function performSearch(iteration, params) {
                       });
                     }, actualCloseDelay * 1000);
 
-                    // Ora esegui lo script (il timeout è già programmato)
+                    // Now execute the script (timeout is already scheduled)
                     chrome.scripting.executeScript(
                       {
                         target: { tabId: tab.id },
@@ -493,21 +495,21 @@ function performSearch(iteration, params) {
                       (results) => {
                         if (chrome.runtime.lastError) {
                           console.error(
-                            "Errore esecuzione script:",
+                            "Script execution error:",
                             chrome.runtime.lastError,
                           );
                         } else {
-                          console.log("Ricerca compilata e inviata");
+                          console.log("Search filled and submitted");
                         }
                       },
                     );
                   } else if (retries < maxRetries) {
-                    // Ancora in caricamento, riprova fra 1 secondo
+                    // Still loading, retry in 1 second
                     retries++;
                     setTimeout(waitForPageLoad, 1000);
                   } else {
-                    // Timeout, procedi comunque
-                    console.log("Timeout caricamento pagina, procedo comunque");
+                    // Timeout, proceed anyway
+                    console.log("Page load timeout, proceeding anyway");
 
                     chrome.scripting.executeScript(
                       {
@@ -528,19 +530,19 @@ function performSearch(iteration, params) {
                 });
               };
 
-              // Inizia l'attesa del caricamento
+              // Start waiting for load
               waitForPageLoad();
             } catch (error) {
-              console.error("Errore nella callback di tabs.create:", error);
+              console.error("Error in tabs.create callback:", error);
               chrome.storage.local.set({
                 isRunning: false,
-                lastError: `Errore creazione tab: ${error.message}`,
+                lastError: `Tab creation error: ${error.message}`,
               });
             }
           },
         );
       } catch (error) {
-        console.error("Errore in performSearch callback:", error);
+        console.error("Error in performSearch callback:", error);
         chrome.storage.local.set({
           isRunning: false,
           lastError: error.message,
@@ -548,25 +550,25 @@ function performSearch(iteration, params) {
       }
     });
   } catch (error) {
-    console.error("Errore critico in performSearch:", error);
+    console.error("Critical error in performSearch:", error);
     chrome.storage.local.set({
       isRunning: false,
-      lastError: `Errore critico: ${error.message}`,
+      lastError: `Critical error: ${error.message}`,
     });
   }
 }
 
 /**
- * Avvia il ciclo di ricerche
- * @param {Object} params - Parametri passati direttamente dal popup
+ * Start the search cycle
+ * @param {Object} params - Parameters passed directly from popup
  */
 function startSearchCycle(params) {
   try {
-    console.log("startSearchCycle chiamato con parametri:", params);
+    console.log("startSearchCycle called with parameters:", params);
 
-    // Verifica che i parametri siano validi
+    // Verify parameters are valid
     if (!params || typeof params !== "object") {
-      throw new Error("Parametri mancanti o non validi");
+      throw new Error("Missing or invalid parameters");
     }
 
     if (
@@ -577,54 +579,51 @@ function startSearchCycle(params) {
       params.totalSearches < 1
     ) {
       throw new Error(
-        `Parametri non validi: closeDelayMin=${params.closeDelayMin}, closeDelayMax=${params.closeDelayMax}, searchDelayMin=${params.searchDelayMin}, searchDelayMax=${params.searchDelayMax}, totalSearches=${params.totalSearches}`,
+        `Invalid parameters: closeDelayMin=${params.closeDelayMin}, closeDelayMax=${params.closeDelayMax}, searchDelayMin=${params.searchDelayMin}, searchDelayMax=${params.searchDelayMax}, totalSearches=${params.totalSearches}`,
       );
     }
 
-    // Imposta isRunning = true nel service worker
+    // Set isRunning = true in service worker
     chrome.storage.local.set({ isRunning: true }, () => {
       if (chrome.runtime.lastError) {
-        console.error(
-          "Errore impostazione isRunning:",
-          chrome.runtime.lastError,
-        );
+        console.error("Error setting isRunning:", chrome.runtime.lastError);
       }
     });
 
-    console.log("Avvio ciclo di ricerca");
+    console.log("Starting search cycle");
 
-    // Avvia la prima ricerca
+    // Start first search
     performSearch(1, params);
   } catch (error) {
-    console.error("Errore critico in startSearchCycle:", error);
+    console.error("Critical error in startSearchCycle:", error);
     chrome.storage.local.set({
       isRunning: false,
-      lastError: `Errore critico avvio: ${error.message}`,
+      lastError: `Critical startup error: ${error.message}`,
     });
   }
 }
 
-// Listener per i messaggi dal popup
+// Message listener from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   try {
-    console.log("Messaggio ricevuto:", message);
+    console.log("Message received:", message);
 
     if (message.action === "start") {
       try {
-        // Verifica che i parametri siano presenti
+        // Verify parameters are present
         if (!message.params) {
-          throw new Error("Parametri mancanti nel messaggio");
+          throw new Error("Missing parameters in message");
         }
 
-        stopSearch(); // Ferma eventuali ricerche in corso
-        startSearchCycle(message.params); // Passa i parametri direttamente
+        stopSearch(); // Stop any ongoing searches
+        startSearchCycle(message.params); // Pass parameters directly
         sendResponse({ success: true });
-        console.log("Start command processato con successo");
+        console.log("Start command processed successfully");
       } catch (error) {
-        console.error("Errore durante start:", error);
+        console.error("Error during start:", error);
         chrome.storage.local.set({
           isRunning: false,
-          lastError: `Errore start: ${error.message}`,
+          lastError: `Start error: ${error.message}`,
         });
         sendResponse({ success: false, error: error.message });
       }
@@ -632,25 +631,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         stopSearch();
         sendResponse({ success: true });
-        console.log("Stop command processato con successo");
+        console.log("Stop command processed successfully");
       } catch (error) {
-        console.error("Errore durante stop:", error);
+        console.error("Error during stop:", error);
         sendResponse({ success: false, error: error.message });
       }
     } else {
-      sendResponse({ success: false, error: "Azione non riconosciuta" });
+      sendResponse({ success: false, error: "Unrecognized action" });
     }
   } catch (error) {
-    console.error("Errore critico nel message listener:", error);
-    sendResponse({ success: false, error: `Errore critico: ${error.message}` });
+    console.error("Critical error in message listener:", error);
+    sendResponse({ success: false, error: `Critical error: ${error.message}` });
   }
   return true;
 });
 
-// Listener per quando l'estensione viene installata o aggiornata
+// Listener for when extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Bing Auto Search installata");
-  // Inizializza i valori di default se non esistono
+  console.log("Bing Auto Search installed");
+  // Initialize default values if they don't exist
   chrome.storage.local.get(
     [
       "closeDelayMin",
@@ -675,7 +674,7 @@ chrome.runtime.onInstalled.addListener(() => {
   );
 });
 
-// Gestisci la chiusura improvvisa dell'estensione
+// Handle sudden extension closure
 chrome.runtime.onSuspend.addListener(() => {
   stopSearch();
 });

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Bing Auto Search",
   "version": "1.0.0",
-  "description": "Esegue automaticamente ricerche su Bing con parametri configurabili",
+  "description": "Automatically performs Bing searches with configurable parameters",
   "permissions": ["storage", "tabs", "scripting", "alarms"],
   "host_permissions": ["https://www.bing.com/*"],
   "action": {

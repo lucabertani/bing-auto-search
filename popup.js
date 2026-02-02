@@ -1,4 +1,4 @@
-// Riferimenti agli elementi del DOM
+// DOM element references
 const closeDelayMinInput = document.getElementById("closeDelayMin");
 const closeDelayMaxInput = document.getElementById("closeDelayMax");
 const searchDelayMinInput = document.getElementById("searchDelayMin");
@@ -8,7 +8,7 @@ const startBtn = document.getElementById("startBtn");
 const stopBtn = document.getElementById("stopBtn");
 const statusDiv = document.getElementById("status");
 
-// Carica i valori salvati all'apertura del popup
+// Load saved values when popup opens
 chrome.storage.local.get(
   [
     "closeDelayMin",
@@ -28,18 +28,18 @@ chrome.storage.local.get(
   },
 );
 
-// Aggiorna lo stato del popup
+// Update popup status
 function updateStatus() {
   chrome.storage.local.get(
     ["isRunning", "currentIteration", "totalSearches"],
     (result) => {
       if (result.isRunning) {
-        statusDiv.textContent = `In esecuzione: ${result.currentIteration || 0}/${result.totalSearches || 0} ricerche`;
+        statusDiv.textContent = `Running: ${result.currentIteration || 0}/${result.totalSearches || 0} searches`;
         statusDiv.style.background = "rgba(76, 175, 80, 0.3)";
         startBtn.disabled = true;
         stopBtn.disabled = false;
       } else {
-        statusDiv.textContent = "Pronto";
+        statusDiv.textContent = "Ready";
         statusDiv.style.background = "rgba(255, 255, 255, 0.2)";
         startBtn.disabled = false;
         stopBtn.disabled = true;
@@ -48,24 +48,24 @@ function updateStatus() {
   );
 }
 
-// Aggiorna lo stato all'apertura e ogni secondo
+// Update status on open and every second
 updateStatus();
 setInterval(updateStatus, 1000);
 
-// Monitora errori dal service worker
+// Monitor errors from service worker
 setInterval(() => {
   chrome.storage.local.get(["lastError"], (result) => {
     if (result.lastError) {
-      alert(`❌ Errore rilevato: ${result.lastError}`);
-      console.error("Errore dal service worker:", result.lastError);
-      // Pulisci l'errore
+      alert(`❌ Error detected: ${result.lastError}`);
+      console.error("Error from service worker:", result.lastError);
+      // Clear the error
       chrome.storage.local.set({ lastError: null, isRunning: false });
       updateStatus();
     }
   });
 }, 2000);
 
-// Listener per il pulsante "Avvia"
+// Start button listener
 startBtn.addEventListener("click", () => {
   try {
     const closeDelayMin = parseInt(closeDelayMinInput.value);
@@ -74,7 +74,7 @@ startBtn.addEventListener("click", () => {
     const searchDelayMax = parseInt(searchDelayMaxInput.value);
     const totalSearches = parseInt(totalSearchesInput.value);
 
-    // Validazione input
+    // Input validation
     if (
       isNaN(closeDelayMin) ||
       isNaN(closeDelayMax) ||
@@ -82,8 +82,8 @@ startBtn.addEventListener("click", () => {
       isNaN(searchDelayMax) ||
       isNaN(totalSearches)
     ) {
-      alert("❌ Errore: Inserisci valori numerici validi");
-      statusDiv.textContent = "⚠️ Valori non validi";
+      alert("❌ Error: Enter valid numeric values");
+      statusDiv.textContent = "⚠️ Invalid values";
       statusDiv.style.background = "rgba(244, 67, 54, 0.3)";
       return;
     }
@@ -95,35 +95,35 @@ startBtn.addEventListener("click", () => {
       searchDelayMax < 1 ||
       totalSearches < 1
     ) {
-      alert("❌ Errore: Tutti i valori devono essere almeno 1");
-      statusDiv.textContent = "⚠️ Inserisci valori validi (minimo 1)";
+      alert("❌ Error: All values must be at least 1");
+      statusDiv.textContent = "⚠️ Enter valid values (minimum 1)";
       statusDiv.style.background = "rgba(244, 67, 54, 0.3)";
       return;
     }
 
     if (closeDelayMin > closeDelayMax) {
-      alert("❌ Errore: Min tempo chiusura tab non può essere > Max");
-      statusDiv.textContent = "⚠️ Intervallo chiusura tab non valido";
+      alert("❌ Error: Min close tab time cannot be > Max");
+      statusDiv.textContent = "⚠️ Invalid tab close interval";
       statusDiv.style.background = "rgba(244, 67, 54, 0.3)";
       return;
     }
 
     if (searchDelayMin > searchDelayMax) {
-      alert("❌ Errore: Min attesa ricerca non può essere > Max");
-      statusDiv.textContent = "⚠️ Intervallo attesa ricerca non valido";
+      alert("❌ Error: Min search wait cannot be > Max");
+      statusDiv.textContent = "⚠️ Invalid search wait interval";
       statusDiv.style.background = "rgba(244, 67, 54, 0.3)";
       return;
     }
 
     if (totalSearches > 200) {
-      alert("❌ Errore: Massimo 200 ricerche consentite");
-      statusDiv.textContent = "⚠️ Massimo 200 ricerche";
+      alert("❌ Error: Maximum 200 searches allowed");
+      statusDiv.textContent = "⚠️ Maximum 200 searches";
       statusDiv.style.background = "rgba(244, 67, 54, 0.3)";
       return;
     }
 
-    // Salva i parametri e invia SUBITO al service worker con i parametri nel messaggio
-    // Questo evita race condition tra salvataggio e lettura
+    // Save parameters and send IMMEDIATELY to service worker with parameters in message
+    // This avoids race condition between save and read
     chrome.storage.local.set(
       {
         closeDelayMin,
@@ -137,13 +137,13 @@ startBtn.addEventListener("click", () => {
       },
       () => {
         if (chrome.runtime.lastError) {
-          const error = `Errore storage: ${chrome.runtime.lastError.message}`;
+          const error = `Storage error: ${chrome.runtime.lastError.message}`;
           alert(`❌ ${error}`);
           console.error(error);
           return;
         }
 
-        // Invia messaggio con i parametri inclusi
+        // Send message with parameters included
         chrome.runtime.sendMessage(
           {
             action: "start",
@@ -157,9 +157,9 @@ startBtn.addEventListener("click", () => {
           },
           (response) => {
             if (chrome.runtime.lastError) {
-              const error = `Errore comunicazione con service worker: ${chrome.runtime.lastError.message}`;
+              const error = `Service worker communication error: ${chrome.runtime.lastError.message}`;
               alert(
-                `❌ ${error}\n\nProva a ricaricare l'estensione da edge://extensions/`,
+                `❌ ${error}\n\nTry reloading the extension from edge://extensions/`,
               );
               console.error(error);
               chrome.storage.local.set({ isRunning: false });
@@ -167,48 +167,48 @@ startBtn.addEventListener("click", () => {
             }
 
             if (response && response.error) {
-              alert(`❌ Errore: ${response.error}`);
-              console.error("Errore dal service worker:", response.error);
+              alert(`❌ Error: ${response.error}`);
+              console.error("Error from service worker:", response.error);
               chrome.storage.local.set({ isRunning: false });
               return;
             }
 
-            console.log("Ricerca avviata con successo");
+            console.log("Search started successfully");
             updateStatus();
           },
         );
       },
     );
   } catch (error) {
-    alert(`❌ Errore inaspettato: ${error.message}`);
-    console.error("Errore nel click di Avvia:", error);
+    alert(`❌ Unexpected error: ${error.message}`);
+    console.error("Error in Start click:", error);
     chrome.storage.local.set({ isRunning: false });
   }
 });
 
-// Listener per il pulsante "Interrompi"
+// Stop button listener
 stopBtn.addEventListener("click", () => {
   try {
     chrome.runtime.sendMessage({ action: "stop" }, (response) => {
       if (chrome.runtime.lastError) {
-        const error = `Errore comunicazione: ${chrome.runtime.lastError.message}`;
+        const error = `Communication error: ${chrome.runtime.lastError.message}`;
         alert(`⚠️ ${error}`);
         console.error(error);
       }
 
       chrome.storage.local.set({ isRunning: false }, () => {
         updateStatus();
-        statusDiv.textContent = "⏹️ Interrotto";
+        statusDiv.textContent = "⏹️ Stopped";
         statusDiv.style.background = "rgba(244, 67, 54, 0.3)";
       });
     });
   } catch (error) {
-    alert(`❌ Errore durante l'interruzione: ${error.message}`);
-    console.error("Errore nel click di Interrompi:", error);
+    alert(`❌ Error during stop: ${error.message}`);
+    console.error("Error in Stop click:", error);
   }
 });
 
-// Salva automaticamente i valori quando cambiano
+// Automatically save values when they change
 closeDelayMinInput.addEventListener("change", () => {
   chrome.storage.local.set({
     closeDelayMin: parseInt(closeDelayMinInput.value),

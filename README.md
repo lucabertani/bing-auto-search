@@ -1,140 +1,144 @@
-# 🔍 Bing Auto Search - Estensione Microsoft Edge
+# 🔍 Bing Auto Search - Microsoft Edge Extension
 
-Un'estensione per Microsoft Edge che esegue automaticamente ricerche su Bing con parametri configurabili.
+A Microsoft Edge extension that automatically performs Bing searches with configurable parameters.
 
-## 📋 Funzionalità
+## 📋 Features
 
-- **Ricerche Automatiche**: Esegue ricerche automatiche su Bing utilizzando 200 query predefinite
-- **Parametri Configurabili**:
-  - **X**: Tempo (in secondi) prima di chiudere la tab
-  - **Y**: Tempo (in secondi) di attesa prima della ricerca successiva
-  - **Z**: Numero totale di ricerche da eseguire (max 200)
-- **Controllo Completo**: Pulsanti per avviare e interrompere il ciclo di ricerche
-- **Stato in Tempo Reale**: Visualizza il progresso delle ricerche (es: 5/10)
-- **Query Intelligenti**: 200 query generate automaticamente con temi vari
+- **Automatic Searches**: Performs automatic Bing searches using 200 predefined queries
+- **Configurable Parameters**:
+  - **X**: Time (in seconds) before closing the tab
+  - **Y**: Time (in seconds) to wait before the next search
+  - **Z**: Total number of searches to perform (max 200)
+- **Full Control**: Buttons to start and stop the search cycle
+- **Real-Time Status**: Displays search progress (e.g., 5/10)
+- **Smart Queries**: 200 automatically generated queries with various topics
 
-## 📁 Struttura del Progetto
+## 📁 Project Structure
 
 ```
 bing-auto-search/
-├── manifest.json          # Configurazione dell'estensione (Manifest V3)
-├── popup.html            # Interfaccia del popup
-├── popup.js              # Logica del popup e gestione UI
-├── background.js         # Service worker per gestire le ricerche
-├── icons/                # Icone dell'estensione
+├── manifest.json          # Extension configuration (Manifest V3)
+├── popup.html            # Popup interface
+├── popup.js              # Popup logic and UI management
+├── background.js         # Service worker to handle searches
+├── icons/                # Extension icons
 │   ├── icon16.png
 │   ├── icon48.png
 │   └── icon128.png
-└── README.md            # Documentazione
+└── README.md            # Documentation
 ```
 
-## 🚀 Installazione
+## 🚀 Installation
 
-1. **Scarica o clona questo repository**
-2. **Apri Microsoft Edge**
-3. **Vai a**: `edge://extensions/`
-4. **Abilita** la modalità sviluppatore (interruttore in basso a sinistra)
-5. **Clicca** su "Carica estensione decompressa"
-6. **Seleziona** la cartella `bing-auto-search`
-7. **L'estensione** sarà ora installata e visibile nella barra degli strumenti
+1. **Download or clone this repository**
+2. **Open Microsoft Edge**
+3. **Navigate to**: `edge://extensions/`
+4. **Enable** Developer mode (toggle in bottom left)
+5. **Click** "Load unpacked"
+6. **Select** the `bing-auto-search` folder
+7. **The extension** will now be installed and visible in the toolbar
 
-## 💡 Utilizzo
+## 💡 Usage
 
-1. **Clicca sull'icona** dell'estensione nella barra degli strumenti di Edge
-2. **Configura i parametri**:
-   - Tempo prima di chiudere tab (X secondi): 1-60
-   - Attesa prima della ricerca successiva (Y secondi): 1-60
-   - Numero totale di ricerche (Z): 1-200
-3. **Clicca su "Avvia"** per iniziare il ciclo di ricerche
-4. **Monitora** il progresso nel popup (es: 5/10 ricerche)
-5. **Clicca su "Interrompi"** per fermare immediatamente il ciclo
+1. **Click the extension icon** in the Edge toolbar
+2. **Configure the parameters**:
+   - Close tab time (X seconds): 1-60
+   - Wait before next search (Y seconds): 1-60
+   - Total number of searches (Z): 1-200
+3. **Click "Start"** to begin the search cycle
+4. **Monitor** progress in the popup (e.g., 5/10 searches)
+5. **Click "Stop"** to immediately stop the cycle
 
-## 🔧 Dettagli Tecnici
+## 🔧 Technical Details
 
 ### Manifest V3
 
-L'estensione utilizza Manifest V3, l'ultima versione del sistema di estensioni di Chrome/Edge.
+The extension uses Manifest V3, the latest version of the Chrome/Edge extension system.
 
-### Permessi Richiesti
+### Required Permissions
 
-- **storage**: Per salvare le configurazioni dell'utente
-- **tabs**: Per aprire e chiudere le tab di ricerca
+- **storage**: To save user configurations
+- **tabs**: To open and close search tabs
+- **scripting**: To fill and submit search forms
+- **alarms**: To persist timeouts across service worker sleep cycles
 
 ### Service Worker (background.js)
 
-- Gestisce il ciclo di ricerche
-- Genera automaticamente 200 query uniche
-- Controlla i timeout per apertura/chiusura tab
-- Gestisce l'interruzione sicura del ciclo
+- Manages the search cycle
+- Automatically generates 200 unique queries
+- Controls timeouts for opening/closing tabs
+- Uses Chrome Alarms API for delays >30 seconds
+- Handles safe cycle interruption
 
-### Generazione Query
+### Query Generation
 
-Le query sono generate automaticamente combinando:
+Queries are automatically generated by combining:
 
-- Template di domande comuni ("che tempo fa", "come si fa", ecc.)
-- Soggetti e contesti ("oggi", "in Italia", "a Roma", ecc.)
-- Argomenti vari (frutta, tecnologia, viaggi, animali, ecc.)
-- Azioni (comprare, cucinare, installare, ecc.)
+- Common question templates ("what's the weather", "how to", etc.)
+- Subjects and contexts ("today", "in Italy", "in Rome", etc.)
+- Various topics (fruit, technology, travel, animals, etc.)
+- Actions (buy, cook, install, etc.)
 
-Esempi di query generate:
+Examples of generated queries:
 
-- "che tempo fa oggi?"
-- "come cucinare pasta?"
-- "dove comprare computer?"
-- "quanto costa telefono?"
-- "qual è il migliore ristorante?"
+- "what's the weather today?"
+- "how to cook pasta?"
+- "where to buy computer?"
+- "how much is phone?"
+- "what's the best restaurant?"
 
-## 🎨 Interfaccia
+## 🎨 Interface
 
-Il popup presenta:
+The popup features:
 
-- Design moderno con gradiente viola
-- Effetti glassmorphism (sfondo sfocato trasparente)
-- Animazioni sui pulsanti
-- Feedback visivo dello stato
-- Validazione input in tempo reale
+- Modern minimalist design
+- Clean and compact layout
+- Microsoft-inspired color scheme
+- Real-time status feedback
+- Input validation
 
-## ⚙️ Configurazione Default
+## ⚙️ Default Configuration
 
-- **X** (chiusura tab): 5 secondi
-- **Y** (attesa): 3 secondi
-- **Z** (ricerche totali): 10
+- **X** (close tab): 10-20 seconds
+- **Y** (wait): 50-80 seconds
+- **Z** (total searches): 10
 
-## 🛡️ Sicurezza
+## 🛡️ Security
 
-- Nessun dato sensibile viene raccolto
-- Le configurazioni sono salvate localmente nel browser
-- L'estensione accede solo a bing.com
-- Tutto il codice è trasparente e verificabile
+- No sensitive data is collected
+- Configurations are saved locally in the browser
+- The extension only accesses bing.com
+- All code is transparent and verifiable
 
-## 📝 Note
+## 📝 Notes
 
-- Le ricerche vengono aperte in tab in background per non disturbare la navigazione
-- È possibile interrompere il ciclo in qualsiasi momento
-- Le configurazioni vengono salvate automaticamente
-- L'estensione si ferma automaticamente al completamento del numero di ricerche impostato
+- Searches are opened in background tabs to not disturb browsing
+- The cycle can be interrupted at any time
+- Configurations are saved automatically
+- The extension stops automatically upon completing the set number of searches
+- For delays >30 seconds, the extension uses Chrome Alarms API to survive service worker sleep
 
 ## 🐛 Troubleshooting
 
-**L'estensione non si avvia:**
+**Extension won't start:**
 
-- Verifica che la modalità sviluppatore sia attiva
-- Ricarica l'estensione da edge://extensions/
+- Verify Developer mode is enabled
+- Reload the extension from edge://extensions/
 
-**Le ricerche non partono:**
+**Searches don't start:**
 
-- Controlla che i valori siano validi (minimo 1)
-- Verifica i permessi dell'estensione
+- Check that values are valid (minimum 1)
+- Verify extension permissions
 
-**Le tab non si chiudono:**
+**Tabs don't close:**
 
-- Controlla la console di Edge (F12) per eventuali errori
-- Ricarica l'estensione
+- Check Edge console (F12) for errors
+- Reload the extension
 
-## 📜 Licenza
+## 📜 License
 
-Questo progetto è distribuito come codice libero per uso personale ed educativo.
+This project is distributed as free code for personal and educational use.
 
-## 👤 Autore
+## 👤 Author
 
-Creato con ❤️ per Microsoft Edge
+Created with ❤️ for Microsoft Edge

@@ -1,109 +1,122 @@
-# 📋 Checklist di Test - Bing Auto Search
+# 📋 Test Checklist - Bing Auto Search
 
-## Test Funzionali
+## Functional Tests
 
-### ✅ Installazione
+### ✅ Installation
 
-- [ ] L'estensione si installa senza errori in Edge
-- [ ] L'icona appare nella barra degli strumenti
-- [ ] Il popup si apre correttamente al click
+- [ ] Extension installs without errors in Edge
+- [ ] Icon appears in toolbar
+- [ ] Popup opens correctly on click
 
-### ✅ Configurazione
+### ✅ Configuration
 
-- [ ] I campi input accettano valori numerici
-- [ ] I valori vengono salvati correttamente
-- [ ] I valori salvati vengono caricati alla riapertura del popup
-- [ ] La validazione impedisce valori < 1
-- [ ] La validazione impedisce Z > 200
+- [ ] Input fields accept numeric values
+- [ ] Values are saved correctly
+- [ ] Saved values load when reopening popup
+- [ ] Validation prevents values < 1
+- [ ] Validation prevents Z > 200
+- [ ] Min values cannot exceed Max values
 
-### ✅ Funzionalità di Ricerca
+### ✅ Search Functionality
 
-- [ ] Il pulsante "Avvia" inizia il ciclo di ricerche
-- [ ] Le tab si aprono con query Bing diverse
-- [ ] Le tab si chiudono dopo X secondi
-- [ ] C'è un'attesa di Y secondi tra le ricerche
-- [ ] Il ciclo si ferma dopo Z ricerche
-- [ ] Il contatore mostra il progresso corretto (es: 5/10)
+- [ ] "Start" button begins search cycle
+- [ ] Tabs open with different Bing queries
+- [ ] Tabs close after random delay (closeDelayMin-closeDelayMax seconds)
+- [ ] There's a wait of random delay (searchDelayMin-searchDelayMax seconds) between searches
+- [ ] Cycle stops after Z searches
+- [ ] Counter shows correct progress (e.g., 5/10)
 
-### ✅ Funzionalità di Interruzione
+### ✅ Stop Functionality
 
-- [ ] Il pulsante "Interrompi" ferma il ciclo immediatamente
-- [ ] La tab corrente viene chiusa all'interruzione
-- [ ] Non ci sono ricerche pendenti dopo l'interruzione
-- [ ] Lo stato torna a "Pronto"
+- [ ] "Stop" button stops cycle immediately
+- [ ] Current tab is closed on interruption
+- [ ] No pending searches after interruption
+- [ ] Status returns to "Ready"
 
-### ✅ Interfaccia Utente
+### ✅ User Interface
 
-- [ ] Il design è gradevole e moderno
-- [ ] I pulsanti cambiano stato (abilitati/disabilitati) correttamente
-- [ ] Lo stato viene aggiornato in tempo reale
-- [ ] I messaggi di errore sono chiari
-- [ ] Le animazioni funzionano correttamente
+- [ ] Design is clean and modern
+- [ ] Buttons change state (enabled/disabled) correctly
+- [ ] Status updates in real-time
+- [ ] Error messages are clear
+- [ ] Layout is compact and minimalist
 
-### ✅ Generazione Query
+### ✅ Query Generation
 
-- [ ] Vengono generate esattamente 200 query
-- [ ] Le query sono diverse tra loro
-- [ ] Le query sono in italiano corretto
-- [ ] Le ricerche usano query casuali dall'array
+- [ ] Exactly 200 queries are generated
+- [ ] Queries are different from each other
+- [ ] Queries are grammatically correct English
+- [ ] Searches use random queries from the array
 
-## Test Edge Cases
+### ✅ Service Worker Persistence
 
-### ⚠️ Scenari Limite
+- [ ] Searches continue with delays > 30 seconds
+- [ ] Chrome Alarms API works for long delays
+- [ ] Service worker sleep doesn't interrupt search cycle
+- [ ] Console shows "Using alarm for delay" for delays > 30s
+- [ ] Console shows "Using setTimeout for delay" for delays ≤ 30s
 
-- [ ] Avviare con valori minimi (X=1, Y=1, Z=1)
-- [ ] Avviare con valori massimi (X=60, Y=60, Z=200)
-- [ ] Interrompere immediatamente dopo l'avvio
-- [ ] Interrompere durante la chiusura di una tab
-- [ ] Chiudere il popup durante l'esecuzione
-- [ ] Chiudere manualmente una tab di ricerca
-- [ ] Avviare un nuovo ciclo mentre uno è in corso
+## Edge Case Tests
 
-## Test Performance
+### ⚠️ Boundary Scenarios
 
-### 🚀 Prestazioni
+- [ ] Start with minimum values (closeDelayMin=1, closeDelayMax=1, searchDelayMin=1, searchDelayMax=1, Z=1)
+- [ ] Start with maximum values (closeDelayMin=60, closeDelayMax=60, searchDelayMin=120, searchDelayMax=120, Z=200)
+- [ ] Stop immediately after starting
+- [ ] Stop during tab closing
+- [ ] Close popup during execution
+- [ ] Manually close a search tab
+- [ ] Start a new cycle while one is running
+- [ ] Test with searchDelay > 30 seconds (alarm functionality)
 
-- [ ] Le ricerche partono senza ritardi evidenti
-- [ ] La memoria non aumenta eccessivamente
-- [ ] Non ci sono memory leak dopo molte ricerche
-- [ ] Il browser rimane reattivo durante le ricerche
+## Performance Tests
 
-## Test Permessi
+### 🚀 Performance
 
-### 🔒 Sicurezza
+- [ ] Searches start without noticeable delays
+- [ ] Memory doesn't increase excessively
+- [ ] No memory leaks after many searches
+- [ ] Browser remains responsive during searches
 
-- [ ] L'estensione richiede solo i permessi necessari
-- [ ] Non ci sono richieste di permessi aggiuntivi
-- [ ] I dati sono salvati solo localmente
+## Permission Tests
+
+### 🔒 Security
+
+- [ ] Extension only requests necessary permissions
+- [ ] No requests for additional permissions
+- [ ] Data is saved only locally
+- [ ] Extension has "alarms" permission
 
 ## Console Errors
 
 ### 🐛 Debug
 
-- [ ] Nessun errore nella console del popup
-- [ ] Nessun errore nella console del service worker
-- [ ] I log mostrano le informazioni corrette
+- [ ] No errors in popup console
+- [ ] No errors in service worker console
+- [ ] Logs show correct information
+- [ ] "Service Worker active and ready!" appears on load
+- [ ] "200 queries generated" appears on load
 
-## Compatibilità
+## Compatibility
 
 ### 🌐 Browser
 
-- [ ] Funziona su Microsoft Edge (Chromium)
-- [ ] Funziona su Google Chrome (opzionale)
+- [ ] Works on Microsoft Edge (Chromium)
+- [ ] Works on Google Chrome (optional)
 
-## Note
+## Notes
 
-Versione testata: ****\_\_\_****
-Data test: ****\_\_\_****
-Tester: ****\_\_\_****
+Version tested: \***\*\_\_\_\*\***
+Test date: \***\*\_\_\_\*\***
+Tester: \***\*\_\_\_\*\***
 
-### Problemi riscontrati:
+### Issues found:
 
 1. ***
 2. ***
 3. ***
 
-### Suggerimenti:
+### Suggestions:
 
 1. ***
 2. ***
