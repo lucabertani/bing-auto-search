@@ -4,6 +4,11 @@ let closeTimeout = null;
 let currentTabId = null;
 let currentParams = null; // Save current parameters for alarm
 
+// Human-like typing delay range (ms)
+// Can be overridden by passing typingDelayMinMs / typingDelayMaxMs in params
+const TYPING_DELAY_MIN_MS = 60;
+const TYPING_DELAY_MAX_MS = 140;
+
 /**
  * Generate a random number between min and max (inclusive)
  */
@@ -80,9 +85,39 @@ chrome.alarms.onAlarm.addListener((alarm) => {
  * Function executed in Bing tab
  * Finds the search bar, inserts text and submits the form
  * @param {string} query - The search query to insert
+ * @param {number} typingDelayMinMs - Minimum delay between keystrokes (ms)
+ * @param {number} typingDelayMaxMs - Maximum delay between keystrokes (ms)
  */
-function submitSearchForm(query) {
+function submitSearchForm(query, typingDelayMinMs, typingDelayMaxMs) {
   try {
+    const defaultTypingDelayMin = 60;
+    const defaultTypingDelayMax = 140;
+
+    const minDelayCandidate = Number(typingDelayMinMs);
+    const maxDelayCandidate = Number(typingDelayMaxMs);
+
+    const typingMin =
+      Number.isFinite(minDelayCandidate) && minDelayCandidate > 0
+        ? Math.floor(minDelayCandidate)
+        : defaultTypingDelayMin;
+    const typingMaxRaw =
+      Number.isFinite(maxDelayCandidate) && maxDelayCandidate > 0
+        ? Math.floor(maxDelayCandidate)
+        : defaultTypingDelayMax;
+    const typingMax = Math.max(typingMaxRaw, typingMin);
+
+    function getRandomTypingDelay() {
+      return (
+        Math.floor(Math.random() * (typingMax - typingMin + 1)) + typingMin
+      );
+    }
+
+    const safeQuery = typeof query === "string" ? query : String(query ?? "");
+
+    if (!safeQuery.trim()) {
+      throw new Error("Empty search query");
+    }
+
     // Try to find Bing's search bar
     let searchInput = document.querySelector("input[name='q']");
 
@@ -99,15 +134,9 @@ function submitSearchForm(query) {
       throw new Error("Search bar not found");
     }
 
-    // Insert text
-    searchInput.value = query;
+    function submitAfterTyping() {
+      const previousUrl = window.location.href;
 
-    // Simulate typing to trigger event listeners
-    const event = new Event("input", { bubbles: true });
-    searchInput.dispatchEvent(event);
-
-    // Wait a bit to ensure event listeners have been processed
-    setTimeout(() => {
       // Find the search form
       let form = searchInput.closest("form");
 
@@ -151,7 +180,55 @@ function submitSearchForm(query) {
         // Submit the form
         form.submit();
       }
-    }, 100);
+
+      // Fallback: if submit does not navigate, force navigation to search results
+      setTimeout(() => {
+        try {
+          if (window.location.href === previousUrl) {
+            window.location.href = `https://www.bing.com/search?q=${encodeURIComponent(safeQuery)}&form=QBLH`;
+          }
+        } catch (fallbackError) {
+          console.error("Fallback navigation error:", fallbackError);
+        }
+      }, 1200);
+    }
+
+    function typeCharacterAt(index) {
+      if (index >= safeQuery.length) {
+        setTimeout(submitAfterTyping, 100);
+        return;
+      }
+
+      const character = safeQuery[index];
+
+      const keyDownEvent = new KeyboardEvent("keydown", {
+        key: character,
+        bubbles: true,
+      });
+      searchInput.dispatchEvent(keyDownEvent);
+
+      const keyPressEvent = new KeyboardEvent("keypress", {
+        key: character,
+        bubbles: true,
+      });
+      searchInput.dispatchEvent(keyPressEvent);
+
+      searchInput.value = safeQuery.slice(0, index + 1);
+      searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+      const keyUpEvent = new KeyboardEvent("keyup", {
+        key: character,
+        bubbles: true,
+      });
+      searchInput.dispatchEvent(keyUpEvent);
+
+      setTimeout(() => typeCharacterAt(index + 1), getRandomTypingDelay());
+    }
+
+    searchInput.focus();
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+    typeCharacterAt(0);
   } catch (error) {
     console.error("Error filling search form:", error.message);
   }
@@ -432,9 +509,23 @@ function performSearch(iteration, params) {
                       params.closeDelayMin,
                       params.closeDelayMax,
                     );
+                    const estimatedTypingMs =
+                      query.length *
+                        (params.typingDelayMaxMs || TYPING_DELAY_MAX_MS) +
+                      1200;
+                    const effectiveCloseDelayMs = Math.max(
+                      actualCloseDelay * 1000,
+                      estimatedTypingMs,
+                    );
                     console.log(
                       `Tab close scheduled in ${params.closeDelayMin}-${params.closeDelayMax}s (random: ${actualCloseDelay}s)`,
                     );
+
+                    if (effectiveCloseDelayMs > actualCloseDelay * 1000) {
+                      console.log(
+                        `Close delay extended to ${Math.ceil(effectiveCloseDelayMs / 1000)}s to allow typed submission`,
+                      );
+                    }
 
                     // Schedule tab close IMMEDIATELY (before executing script)
                     // This ensures timeout is set even if executeScript callback isn't called
@@ -483,14 +574,18 @@ function performSearch(iteration, params) {
                           );
                         }
                       });
-                    }, actualCloseDelay * 1000);
+                    }, effectiveCloseDelayMs);
 
                     // Now execute the script (timeout is already scheduled)
                     chrome.scripting.executeScript(
                       {
                         target: { tabId: tab.id },
                         function: submitSearchForm,
-                        args: [query],
+                        args: [
+                          query,
+                          params.typingDelayMinMs,
+                          params.typingDelayMaxMs,
+                        ],
                       },
                       (results) => {
                         if (chrome.runtime.lastError) {
@@ -515,7 +610,11 @@ function performSearch(iteration, params) {
                       {
                         target: { tabId: tab.id },
                         function: submitSearchForm,
-                        args: [query],
+                        args: [
+                          query,
+                          params.typingDelayMinMs,
+                          params.typingDelayMaxMs,
+                        ],
                       },
                       (results) => {
                         if (chrome.runtime.lastError) {
@@ -564,6 +663,27 @@ function performSearch(iteration, params) {
  */
 function startSearchCycle(params) {
   try {
+    const normalizedParams = {
+      ...params,
+      typingDelayMinMs:
+        Number.isFinite(Number(params.typingDelayMinMs)) &&
+        Number(params.typingDelayMinMs) > 0
+          ? Math.floor(Number(params.typingDelayMinMs))
+          : TYPING_DELAY_MIN_MS,
+      typingDelayMaxMs:
+        Number.isFinite(Number(params.typingDelayMaxMs)) &&
+        Number(params.typingDelayMaxMs) > 0
+          ? Math.floor(Number(params.typingDelayMaxMs))
+          : TYPING_DELAY_MAX_MS,
+    };
+
+    normalizedParams.typingDelayMaxMs = Math.max(
+      normalizedParams.typingDelayMaxMs,
+      normalizedParams.typingDelayMinMs,
+    );
+
+    params = normalizedParams;
+
     console.log("startSearchCycle called with parameters:", params);
 
     // Verify parameters are valid
